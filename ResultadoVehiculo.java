@@ -20,6 +20,15 @@ public class ResultadoVehiculo {
     private final double esperaReal;
     private final double tiempoTotal;
     private final double costoFinal;
+    private final String estado;
+    private final String motivoNoAtendido;
+    private final double precioAplicado;
+    private final double ingresoGenerado;
+    private final double perdidaEstimada;
+    private final double inventarioAntes;
+    private final double inventarioDespues;
+    private final double litrosVendidosReales;
+    private final double litrosNoVendidos;
 
     public ResultadoVehiculo(
             int id,
@@ -38,7 +47,16 @@ public class ResultadoVehiculo {
             double fin,
             double esperaReal,
             double tiempoTotal,
-            double costoFinal
+            double costoFinal,
+            String estado,
+            String motivoNoAtendido,
+            double precioAplicado,
+            double ingresoGenerado,
+            double perdidaEstimada,
+            double inventarioAntes,
+            double inventarioDespues,
+            double litrosVendidosReales,
+            double litrosNoVendidos
     ) {
         this.id = id;
         this.horaLlegada = horaLlegada;
@@ -57,27 +75,34 @@ public class ResultadoVehiculo {
         this.esperaReal = esperaReal;
         this.tiempoTotal = tiempoTotal;
         this.costoFinal = costoFinal;
+        this.estado = estado;
+        this.motivoNoAtendido = motivoNoAtendido;
+        this.precioAplicado = precioAplicado;
+        this.ingresoGenerado = ingresoGenerado;
+        this.perdidaEstimada = perdidaEstimada;
+        this.inventarioAntes = inventarioAntes;
+        this.inventarioDespues = inventarioDespues;
+        this.litrosVendidosReales = litrosVendidosReales;
+        this.litrosNoVendidos = litrosNoVendidos;
     }
 
     public String filaTabla() {
         return String.format(
                 Locale.US,
-                "%-4d %-7.2f %-18s %-10s %8.2f %7.2f %8.2f %8.2f %10.2f %10.2f %-15s %-4s %8.2f %8.2f %8.2f",
+                "%-4d %-7.2f %-13s %-18s %-10s %8.2f %-15s %-4s %8.2f %8.2f %10.2f %10.2f %-12s",
                 id,
                 horaLlegada,
+                estado,
                 tipoVehiculo,
                 carburante,
                 litros,
-                tiempoServicio,
-                esperaSub,
-                esperaInt,
-                costoSub,
-                costoInt,
                 decision,
                 surtidor,
-                inicio,
-                fin,
-                tiempoTotal
+                litrosVendidosReales,
+                litrosNoVendidos,
+                ingresoGenerado,
+                perdidaEstimada,
+                motivoNoAtendido
         );
     }
 
@@ -147,5 +172,41 @@ public class ResultadoVehiculo {
 
     public double getCostoFinal() {
         return costoFinal;
+    }
+
+    public String getEstado() {
+        return estado;
+    }
+
+    public String getMotivoNoAtendido() {
+        return motivoNoAtendido;
+    }
+
+    public double getPrecioAplicado() {
+        return precioAplicado;
+    }
+
+    public double getIngresoGenerado() {
+        return ingresoGenerado;
+    }
+
+    public double getPerdidaEstimada() {
+        return perdidaEstimada;
+    }
+
+    public double getInventarioAntes() {
+        return inventarioAntes;
+    }
+
+    public double getInventarioDespues() {
+        return inventarioDespues;
+    }
+
+    public double getLitrosVendidosReales() {
+        return litrosVendidosReales;
+    }
+
+    public double getLitrosNoVendidos() {
+        return litrosNoVendidos;
     }
 }

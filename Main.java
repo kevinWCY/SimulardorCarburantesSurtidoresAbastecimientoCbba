@@ -13,9 +13,9 @@ public class Main {
         System.out.println(" SIMULADOR DE SURTIDORES DE COMBUSTIBLES - JAVA ");
         System.out.println("=================================================");
 
-        int n = leerEntero(sc, "Cantidad de vehiculos a simular", 15);
-        double lambda = leerDecimal(sc, "Lambda llegadas vehiculos/min", 0.75);
-        int trimestre = leerEntero(sc, "Trimestre a simular", 3);
+        int n = leerEntero(sc, "Cantidad de vehiculos a simular", 50);
+        double lambda = leerDecimal(sc, "Lambda llegadas vehiculos/min", 1.50);
+        int trimestre = leerEntero(sc, "Trimestre a simular", 4);
         long semilla = leerLong(sc, "Semilla aleatoria", 100);
 
         Simulador simulador = new Simulador(
@@ -25,7 +25,16 @@ public class Main {
                 1.32,
                 12.36,
                 trimestre,
-                semilla
+                semilla,
+                3000,
+                30000,
+                3000,
+                10,
+                20,
+                15000,
+                25000,
+                5,
+                10
         );
 
         List<ResultadoVehiculo> resultados = simulador.ejecutar();
@@ -38,6 +47,9 @@ public class Main {
 
     private static int leerEntero(Scanner sc, String mensaje, int valorDefecto) {
         System.out.print(mensaje + " [" + valorDefecto + "]: ");
+        if (!sc.hasNextLine()) {
+            return valorDefecto;
+        }
         String entrada = sc.nextLine().trim();
 
         if (entrada.isEmpty()) {
@@ -54,6 +66,9 @@ public class Main {
 
     private static long leerLong(Scanner sc, String mensaje, long valorDefecto) {
         System.out.print(mensaje + " [" + valorDefecto + "]: ");
+        if (!sc.hasNextLine()) {
+            return valorDefecto;
+        }
         String entrada = sc.nextLine().trim();
 
         if (entrada.isEmpty()) {
@@ -70,6 +85,9 @@ public class Main {
 
     private static double leerDecimal(Scanner sc, String mensaje, double valorDefecto) {
         System.out.print(mensaje + " [" + valorDefecto + "]: ");
+        if (!sc.hasNextLine()) {
+            return valorDefecto;
+        }
         String entrada = sc.nextLine().trim().replace(",", ".");
 
         if (entrada.isEmpty()) {
