@@ -2,6 +2,7 @@
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -23,9 +24,12 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Properties;
 
 public class InterfazSimulador extends JFrame {
 
@@ -56,6 +60,9 @@ public class InterfazSimulador extends JFrame {
     private final DefaultTableModel modeloUtilizacion;
 
     private final GraficoResultadosPanel panelGraficos;
+    private List<ResultadoVehiculo> ultimosResultados;
+    private ResumenSimulacion ultimoResumen;
+    private Simulador ultimoSimulador;
 
     public InterfazSimulador() {
         Locale.setDefault(Locale.US);
@@ -90,6 +97,9 @@ public class InterfazSimulador extends JFrame {
         modeloResumenAbastecimiento = new DefaultTableModel();
         modeloUtilizacion = new DefaultTableModel();
         panelGraficos = new GraficoResultadosPanel();
+        ultimosResultados = null;
+        ultimoResumen = null;
+        ultimoSimulador = null;
 
         configurarModelos();
         restaurarValoresPorDefecto();
@@ -231,14 +241,26 @@ public class InterfazSimulador extends JFrame {
         panel.setBorder(crearBorde("Acciones"));
 
         JPanel botones = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 6));
+        JButton btnEscenarioBase = new JButton("Escenario base");
+        JButton btnGuardar = new JButton("Guardar configuracion");
+        JButton btnCargar = new JButton("Cargar configuracion");
+        JButton btnExportar = new JButton("Exportar DOCX");
         JButton btnLimpiar = new JButton("Limpiar resultados");
         JButton btnRestaurar = new JButton("Restaurar valores por defecto");
         JButton btnEjecutar = new JButton("Ejecutar simulacion");
 
+        btnEscenarioBase.addActionListener(e -> cargarEscenarioBase());
+        btnGuardar.addActionListener(e -> guardarConfiguracion());
+        btnCargar.addActionListener(e -> cargarConfiguracion());
+        btnExportar.addActionListener(e -> exportarDocx());
         btnLimpiar.addActionListener(e -> limpiarResultados());
         btnRestaurar.addActionListener(e -> restaurarValoresPorDefecto());
         btnEjecutar.addActionListener(e -> ejecutarSimulacion());
 
+        botones.add(btnEscenarioBase);
+        botones.add(btnGuardar);
+        botones.add(btnCargar);
+        botones.add(btnExportar);
         botones.add(btnLimpiar);
         botones.add(btnRestaurar);
         botones.add(btnEjecutar);
@@ -365,8 +387,9 @@ public class InterfazSimulador extends JFrame {
             double descargaMin = leerDecimal(txtDescargaMin.getText(), "Descarga minima");
             double descargaMax = leerDecimal(txtDescargaMax.getText(), "Descarga maxima");
 
-            validarParametros(n, lambda, capacidadMaxima, tiempoCisternaMin, tiempoCisternaMax,
-                    cargaCisternaMin, cargaCisternaMax, descargaMin, descargaMax);
+            validarParametros(n, lambda, trimestre, inventarioInicial, capacidadMaxima, nivelMinimo,
+                    tiempoCisternaMin, tiempoCisternaMax, cargaCisternaMin, cargaCisternaMax,
+                    descargaMin, descargaMax);
             validarPrecios(trimestre);
 
             Simulador simulador = new Simulador(
@@ -401,6 +424,9 @@ public class InterfazSimulador extends JFrame {
 
             List<ResultadoVehiculo> resultados = simulador.ejecutar();
             ResumenSimulacion resumen = ResumenSimulacion.desde(resultados, simulador);
+            ultimosResultados = resultados;
+            ultimoResumen = resumen;
+            ultimoSimulador = simulador;
 
             llenarTablaVehiculos(resultados);
             llenarResumenOperativo(resumen);
@@ -510,7 +536,10 @@ public class InterfazSimulador extends JFrame {
     private void validarParametros(
             int n,
             double lambda,
+            int cantidadPeriodos,
+            double inventarioInicial,
             double capacidadMaxima,
+            double nivelMinimo,
             double tiempoCisternaMin,
             double tiempoCisternaMax,
             double cargaCisternaMin,
@@ -526,8 +555,28 @@ public class InterfazSimulador extends JFrame {
             throw new IllegalArgumentException("Lambda debe ser mayor a 0.");
         }
 
+        if (cantidadPeriodos < 0) {
+            throw new IllegalArgumentException("La cantidad de periodos no puede ser negativa.");
+        }
+
+        if (inventarioInicial < 0) {
+            throw new IllegalArgumentException("El inventario inicial no puede ser negativo.");
+        }
+
         if (capacidadMaxima <= 0) {
             throw new IllegalArgumentException("La capacidad maxima debe ser mayor a 0.");
+        }
+
+        if (inventarioInicial > capacidadMaxima) {
+            throw new IllegalArgumentException("El inventario inicial no debe superar la capacidad maxima.");
+        }
+
+        if (nivelMinimo < 0) {
+            throw new IllegalArgumentException("El nivel minimo no puede ser negativo.");
+        }
+
+        if (nivelMinimo > capacidadMaxima) {
+            throw new IllegalArgumentException("El nivel minimo no debe superar la capacidad maxima.");
         }
 
         if (tiempoCisternaMin < 0 || tiempoCisternaMax < tiempoCisternaMin) {
@@ -632,7 +681,31 @@ public class InterfazSimulador extends JFrame {
         modeloResumenEconomico.setRowCount(0);
         modeloResumenAbastecimiento.setRowCount(0);
         modeloUtilizacion.setRowCount(0);
+        ultimosResultados = null;
+        ultimoResumen = null;
+        ultimoSimulador = null;
         panelGraficos.setResumen(null);
+    }
+
+    private void cargarEscenarioBase() {
+        txtN.setText("50");
+        txtLambda.setText("1.50");
+        txtTrimestre.setText("4");
+        cboPeriodicidad.setSelectedItem("Trimestral");
+        txtSemilla.setText("12345");
+        txtInventarioInicial.setText("3000");
+        txtCapacidadMaxima.setText("30000");
+        txtNivelMinimo.setText("3000");
+        txtTiempoCisternaMin.setText("10");
+        txtTiempoCisternaMax.setText("20");
+        txtCargaCisternaMin.setText("15000");
+        txtCargaCisternaMax.setText("25000");
+        txtDescargaMin.setText("5");
+        txtDescargaMax.setText("10");
+
+        cargarTablaBasePrecios();
+        cargarTablaBasePerfiles();
+        limpiarResultados();
     }
 
     private void restaurarValoresPorDefecto() {
@@ -651,16 +724,178 @@ public class InterfazSimulador extends JFrame {
         txtDescargaMin.setText("5");
         txtDescargaMax.setText("10");
 
+        cargarTablaBasePerfiles();
+        cargarTablaBasePrecios();
+    }
+
+    private void cargarTablaBasePerfiles() {
         modeloPerfiles.setRowCount(0);
         modeloPerfiles.addRow(new Object[]{"Particular", "20", "45", "3", "6", "30"});
         modeloPerfiles.addRow(new Object[]{"Publico urbano", "25", "60", "4", "7", "60"});
         modeloPerfiles.addRow(new Object[]{"Interprovincial", "60", "150", "5", "9", "100"});
         modeloPerfiles.addRow(new Object[]{"Pesado", "200", "400", "7", "12", "150"});
+    }
 
+    private void cargarTablaBasePrecios() {
         modeloPrecios.setRowCount(0);
         modeloPrecios.addRow(new Object[]{"Gasolina", "6.96", "1.32", "8.68"});
         modeloPrecios.addRow(new Object[]{"Diesel", "9.80", "0.00", "9.80"});
         modeloPrecios.addRow(new Object[]{"GNV", "2.73", "0.00", "2.90"});
+    }
+
+    private void guardarConfiguracion() {
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Guardar configuracion");
+        chooser.setSelectedFile(new File("configuracion-simulador.properties"));
+
+        if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+
+        File archivo = asegurarExtension(chooser.getSelectedFile(), ".properties");
+
+        try {
+            ConfiguracionArchivo.guardar(archivo, obtenerConfiguracion());
+            JOptionPane.showMessageDialog(this, "Configuracion guardada correctamente.");
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(this,
+                    "No se pudo guardar la configuracion: " + ex.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void cargarConfiguracion() {
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Cargar configuracion");
+
+        if (chooser.showOpenDialog(this) != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+
+        try {
+            aplicarConfiguracion(ConfiguracionArchivo.cargar(chooser.getSelectedFile()));
+            limpiarResultados();
+            JOptionPane.showMessageDialog(this, "Configuracion cargada correctamente.");
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(this,
+                    "No se pudo cargar la configuracion: " + ex.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void exportarDocx() {
+        if (ultimosResultados == null || ultimoResumen == null || ultimoSimulador == null) {
+            JOptionPane.showMessageDialog(this,
+                    "No hay resultados para exportar.",
+                    "Exportar DOCX",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Exportar DOCX");
+        chooser.setSelectedFile(new File("reporte-simulacion.docx"));
+
+        if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+
+        File archivo = asegurarExtension(chooser.getSelectedFile(), ".docx");
+
+        try {
+            ExportadorDocx.exportar(
+                    archivo,
+                    obtenerConfiguracion(),
+                    ultimoResumen,
+                    ultimoSimulador,
+                    ultimosResultados
+            );
+            JOptionPane.showMessageDialog(this, "Reporte DOCX exportado correctamente.");
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(this,
+                    "No se pudo exportar el DOCX: " + ex.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private File asegurarExtension(File archivo, String extension) {
+        if (archivo.getName().toLowerCase(Locale.US).endsWith(extension)) {
+            return archivo;
+        }
+        return new File(archivo.getParentFile(), archivo.getName() + extension);
+    }
+
+    private Properties obtenerConfiguracion() {
+        Properties props = new Properties();
+        props.setProperty("general.n", txtN.getText());
+        props.setProperty("general.lambda", txtLambda.getText());
+        props.setProperty("general.periodos", txtTrimestre.getText());
+        props.setProperty("general.periodicidad", String.valueOf(cboPeriodicidad.getSelectedItem()));
+        props.setProperty("general.semilla", txtSemilla.getText());
+
+        props.setProperty("abastecimiento.inventarioInicial", txtInventarioInicial.getText());
+        props.setProperty("abastecimiento.capacidadMaxima", txtCapacidadMaxima.getText());
+        props.setProperty("abastecimiento.nivelMinimo", txtNivelMinimo.getText());
+        props.setProperty("abastecimiento.tiempoCisternaMin", txtTiempoCisternaMin.getText());
+        props.setProperty("abastecimiento.tiempoCisternaMax", txtTiempoCisternaMax.getText());
+        props.setProperty("abastecimiento.cargaCisternaMin", txtCargaCisternaMin.getText());
+        props.setProperty("abastecimiento.cargaCisternaMax", txtCargaCisternaMax.getText());
+        props.setProperty("abastecimiento.descargaMin", txtDescargaMin.getText());
+        props.setProperty("abastecimiento.descargaMax", txtDescargaMax.getText());
+
+        guardarTabla(props, "precio", modeloPrecios);
+        guardarTabla(props, "perfil", modeloPerfiles);
+        return props;
+    }
+
+    private void aplicarConfiguracion(Properties props) {
+        txtN.setText(props.getProperty("general.n", "50"));
+        txtLambda.setText(props.getProperty("general.lambda", "1.50"));
+        txtTrimestre.setText(props.getProperty("general.periodos", "4"));
+        cboPeriodicidad.setSelectedItem(props.getProperty("general.periodicidad", "Trimestral"));
+        txtSemilla.setText(props.getProperty("general.semilla", "12345"));
+
+        txtInventarioInicial.setText(props.getProperty("abastecimiento.inventarioInicial", "3000"));
+        txtCapacidadMaxima.setText(props.getProperty("abastecimiento.capacidadMaxima", "30000"));
+        txtNivelMinimo.setText(props.getProperty("abastecimiento.nivelMinimo", "3000"));
+        txtTiempoCisternaMin.setText(props.getProperty("abastecimiento.tiempoCisternaMin", "10"));
+        txtTiempoCisternaMax.setText(props.getProperty("abastecimiento.tiempoCisternaMax", "20"));
+        txtCargaCisternaMin.setText(props.getProperty("abastecimiento.cargaCisternaMin", "15000"));
+        txtCargaCisternaMax.setText(props.getProperty("abastecimiento.cargaCisternaMax", "25000"));
+        txtDescargaMin.setText(props.getProperty("abastecimiento.descargaMin", "5"));
+        txtDescargaMax.setText(props.getProperty("abastecimiento.descargaMax", "10"));
+
+        cargarTabla(props, "precio", modeloPrecios);
+        cargarTabla(props, "perfil", modeloPerfiles);
+    }
+
+    private void guardarTabla(Properties props, String prefijo, DefaultTableModel modelo) {
+        props.setProperty(prefijo + ".filas", String.valueOf(modelo.getRowCount()));
+        props.setProperty(prefijo + ".columnas", String.valueOf(modelo.getColumnCount()));
+
+        for (int fila = 0; fila < modelo.getRowCount(); fila++) {
+            for (int columna = 0; columna < modelo.getColumnCount(); columna++) {
+                Object valor = modelo.getValueAt(fila, columna);
+                props.setProperty(prefijo + "." + fila + "." + columna, valor == null ? "" : valor.toString());
+            }
+        }
+    }
+
+    private void cargarTabla(Properties props, String prefijo, DefaultTableModel modelo) {
+        int filas = Integer.parseInt(props.getProperty(prefijo + ".filas", "0"));
+        int columnas = modelo.getColumnCount();
+        modelo.setRowCount(0);
+
+        for (int fila = 0; fila < filas; fila++) {
+            Object[] valores = new Object[columnas];
+            for (int columna = 0; columna < columnas; columna++) {
+                valores[columna] = props.getProperty(prefijo + "." + fila + "." + columna, "");
+            }
+            modelo.addRow(valores);
+        }
     }
 
     private int leerEntero(String texto, String campo) {
