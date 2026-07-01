@@ -15,8 +15,11 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumnModel;
 import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -34,7 +37,18 @@ import java.util.Properties;
 public class InterfazSimulador extends JFrame {
 
     private static final Font FUENTE_BASE = new Font("SansSerif", Font.PLAIN, 13);
+    private static final Font FUENTE_TITULO = new Font("SansSerif", Font.BOLD, 20);
+    private static final Font FUENTE_SUBTITULO = new Font("SansSerif", Font.PLAIN, 13);
     private static final Dimension TAMANIO_CAMPO = new Dimension(110, 26);
+    private static final Color AZUL_PETROLEO = new Color(22, 84, 112);
+    private static final Color AZUL_ACCION = new Color(35, 105, 145);
+    private static final Color VERDE_ABASTECIMIENTO = new Color(56, 142, 93);
+    private static final Color NARANJA_RUTA = new Color(221, 132, 48);
+    private static final Color ROJO_ALERTA = new Color(184, 82, 82);
+    private static final Color GRIS_FONDO = new Color(241, 244, 248);
+    private static final Color GRIS_BORDE = new Color(207, 216, 226);
+    private static final Color GRIS_SUAVE = new Color(232, 237, 243);
+    private static final Color BLANCO_TARJETA = Color.WHITE;
 
     private final JTextField txtN;
     private final JTextField txtLambda;
@@ -72,6 +86,7 @@ public class InterfazSimulador extends JFrame {
         setMinimumSize(new Dimension(1060, 680));
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        getContentPane().setBackground(GRIS_FONDO);
 
         txtN = crearCampo();
         txtLambda = crearCampo();
@@ -106,6 +121,8 @@ public class InterfazSimulador extends JFrame {
 
         JTabbedPane tabs = new JTabbedPane();
         tabs.setFont(FUENTE_BASE);
+        tabs.setBackground(GRIS_FONDO);
+        tabs.setForeground(AZUL_PETROLEO);
         tabs.addTab("Parametros", crearPanelParametros());
         tabs.addTab("Resultados por vehiculo", crearPanelResultadosVehiculo());
         tabs.addTab("Resumen general", crearPanelResumenGeneral());
@@ -124,23 +141,50 @@ public class InterfazSimulador extends JFrame {
 
     private JPanel crearPanelParametros() {
         JPanel contenedor = new JPanel(new BorderLayout(8, 8));
+        contenedor.setBackground(GRIS_FONDO);
         contenedor.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         JPanel filaSuperior = new JPanel(new GridLayout(1, 2, 8, 8));
+        filaSuperior.setOpaque(false);
         filaSuperior.add(crearPanelParametrosGenerales());
         filaSuperior.add(crearPanelPrecios());
 
         JPanel filaCentral = new JPanel(new GridLayout(1, 2, 8, 8));
+        filaCentral.setOpaque(false);
         filaCentral.add(crearPanelPerfiles());
         filaCentral.add(crearPanelAbastecimiento());
 
         JPanel centro = new JPanel(new GridLayout(2, 1, 8, 8));
+        centro.setOpaque(false);
         centro.add(filaSuperior);
         centro.add(filaCentral);
 
+        contenedor.add(crearEncabezado(), BorderLayout.NORTH);
         contenedor.add(centro, BorderLayout.CENTER);
         contenedor.add(crearBarraAcciones(), BorderLayout.SOUTH);
         return contenedor;
+    }
+
+    private JPanel crearEncabezado() {
+        JPanel panel = new JPanel(new BorderLayout(10, 2));
+        panel.setBackground(AZUL_PETROLEO);
+        panel.setBorder(BorderFactory.createEmptyBorder(12, 16, 12, 16));
+
+        JLabel titulo = new JLabel("Simulador de Abastecimiento de Carburantes");
+        titulo.setFont(FUENTE_TITULO);
+        titulo.setForeground(Color.WHITE);
+
+        JLabel subtitulo = new JLabel("An\u00e1lisis de demanda, inventario, cisternas, ingresos y atenci\u00f3n en surtidores");
+        subtitulo.setFont(FUENTE_SUBTITULO);
+        subtitulo.setForeground(new Color(218, 235, 242));
+
+        JPanel textos = new JPanel(new GridLayout(2, 1, 0, 2));
+        textos.setOpaque(false);
+        textos.add(titulo);
+        textos.add(subtitulo);
+
+        panel.add(textos, BorderLayout.CENTER);
+        return panel;
     }
 
     private JPanel crearPanelParametrosGenerales() {
@@ -155,6 +199,7 @@ public class InterfazSimulador extends JFrame {
 
     private JPanel crearPanelPrecios() {
         JPanel panel = new JPanel(new BorderLayout(4, 4));
+        panel.setBackground(BLANCO_TARJETA);
         panel.setBorder(crearBorde("Precios por carburante"));
 
         JTable tabla = crearTabla(modeloPrecios, 24);
@@ -167,6 +212,7 @@ public class InterfazSimulador extends JFrame {
 
     private JPanel crearPanelPerfiles() {
         JPanel panel = new JPanel(new BorderLayout(4, 4));
+        panel.setBackground(BLANCO_TARJETA);
         panel.setBorder(crearBorde("Perfiles de vehiculos"));
 
         JTable tabla = crearTabla(modeloPerfiles, 22);
@@ -193,13 +239,21 @@ public class InterfazSimulador extends JFrame {
 
     private JPanel crearPanelFormulario(String titulo) {
         JPanel panel = new JPanel(new GridBagLayout());
+        panel.setBackground(BLANCO_TARJETA);
         panel.setBorder(crearBorde(titulo));
         return panel;
     }
 
     private TitledBorder crearBorde(String titulo) {
-        TitledBorder borde = BorderFactory.createTitledBorder(titulo);
+        TitledBorder borde = BorderFactory.createTitledBorder(
+                BorderFactory.createCompoundBorder(
+                        BorderFactory.createLineBorder(GRIS_BORDE),
+                        BorderFactory.createEmptyBorder(6, 8, 8, 8)
+                ),
+                titulo
+        );
         borde.setTitleFont(FUENTE_BASE.deriveFont(Font.BOLD));
+        borde.setTitleColor(AZUL_PETROLEO);
         return borde;
     }
 
@@ -208,14 +262,14 @@ public class InterfazSimulador extends JFrame {
         label.gridx = 0;
         label.gridy = fila;
         label.anchor = GridBagConstraints.WEST;
-        label.insets = new Insets(3, 8, 3, 8);
+        label.insets = new Insets(fila == 0 ? 10 : 4, 10, 4, 10);
         panel.add(new JLabel(etiqueta + ":"), label);
 
         GridBagConstraints input = new GridBagConstraints();
         input.gridx = 1;
         input.gridy = fila;
         input.anchor = GridBagConstraints.WEST;
-        input.insets = new Insets(3, 2, 3, 8);
+        input.insets = new Insets(fila == 0 ? 10 : 4, 2, 4, 10);
         panel.add(campo, input);
     }
 
@@ -224,52 +278,83 @@ public class InterfazSimulador extends JFrame {
         label.gridx = 0;
         label.gridy = fila;
         label.anchor = GridBagConstraints.WEST;
-        label.insets = new Insets(3, 8, 3, 8);
+        label.insets = new Insets(fila == 0 ? 10 : 4, 10, 4, 10);
         panel.add(new JLabel(etiqueta + ":"), label);
 
         GridBagConstraints input = new GridBagConstraints();
         input.gridx = 1;
         input.gridy = fila;
         input.anchor = GridBagConstraints.WEST;
-        input.insets = new Insets(3, 2, 3, 8);
+        input.insets = new Insets(fila == 0 ? 10 : 4, 2, 4, 10);
         combo.setPreferredSize(new Dimension(130, 26));
         panel.add(combo, input);
     }
 
     private JPanel crearBarraAcciones() {
         JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(BLANCO_TARJETA);
         panel.setBorder(crearBorde("Acciones"));
 
         JPanel botones = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 6));
+        botones.setOpaque(false);
+        JButton btnEjecutar = new JButton("Ejecutar simulacion");
         JButton btnEscenarioBase = new JButton("Escenario base");
-        JButton btnGuardar = new JButton("Guardar configuracion");
-        JButton btnCargar = new JButton("Cargar configuracion");
-        JButton btnExportar = new JButton("Exportar DOCX");
         JButton btnLimpiar = new JButton("Limpiar resultados");
         JButton btnRestaurar = new JButton("Restaurar valores por defecto");
-        JButton btnEjecutar = new JButton("Ejecutar simulacion");
+        JButton btnGuardar = new JButton("Guardar configuracion");
+        JButton btnCargar = new JButton("Cargar configuracion");
+        JButton btnExportarDocx = new JButton("Exportar DOCX");
+        JButton btnExportarCsv = new JButton("Exportar CSV");
+        JButton btnExportarExcel = new JButton("Exportar Excel");
 
+        btnEjecutar.addActionListener(e -> ejecutarSimulacion());
         btnEscenarioBase.addActionListener(e -> cargarEscenarioBase());
-        btnGuardar.addActionListener(e -> guardarConfiguracion());
-        btnCargar.addActionListener(e -> cargarConfiguracion());
-        btnExportar.addActionListener(e -> exportarDocx());
         btnLimpiar.addActionListener(e -> limpiarResultados());
         btnRestaurar.addActionListener(e -> restaurarValoresPorDefecto());
-        btnEjecutar.addActionListener(e -> ejecutarSimulacion());
+        btnGuardar.addActionListener(e -> guardarConfiguracion());
+        btnCargar.addActionListener(e -> cargarConfiguracion());
+        btnExportarDocx.addActionListener(e -> exportarDocx());
+        btnExportarCsv.addActionListener(e -> exportarCsv());
+        btnExportarExcel.addActionListener(e -> exportarExcel());
 
+        estilizarBoton(btnEjecutar, AZUL_PETROLEO, Color.WHITE);
+        estilizarBoton(btnEscenarioBase, AZUL_ACCION, Color.WHITE);
+        estilizarBoton(btnLimpiar, new Color(103, 116, 132), Color.WHITE);
+        estilizarBoton(btnRestaurar, GRIS_SUAVE, AZUL_PETROLEO);
+        estilizarBoton(btnGuardar, GRIS_SUAVE, AZUL_PETROLEO);
+        estilizarBoton(btnCargar, GRIS_SUAVE, AZUL_PETROLEO);
+        estilizarBoton(btnExportarDocx, VERDE_ABASTECIMIENTO, Color.WHITE);
+        estilizarBoton(btnExportarCsv, VERDE_ABASTECIMIENTO, Color.WHITE);
+        estilizarBoton(btnExportarExcel, VERDE_ABASTECIMIENTO, Color.WHITE);
+
+        botones.add(btnEjecutar);
         botones.add(btnEscenarioBase);
-        botones.add(btnGuardar);
-        botones.add(btnCargar);
-        botones.add(btnExportar);
         botones.add(btnLimpiar);
         botones.add(btnRestaurar);
-        botones.add(btnEjecutar);
+        botones.add(btnGuardar);
+        botones.add(btnCargar);
+        botones.add(btnExportarDocx);
+        botones.add(btnExportarCsv);
+        botones.add(btnExportarExcel);
         panel.add(botones, BorderLayout.EAST);
         return panel;
     }
 
+    private void estilizarBoton(JButton boton, Color fondo, Color texto) {
+        boton.setFont(FUENTE_BASE.deriveFont(Font.BOLD));
+        boton.setBackground(fondo);
+        boton.setForeground(texto);
+        boton.setFocusPainted(false);
+        boton.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(fondo.darker()),
+                BorderFactory.createEmptyBorder(5, 10, 5, 10)
+        ));
+        boton.setOpaque(true);
+    }
+
     private JPanel crearPanelResultadosVehiculo() {
         JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(GRIS_FONDO);
         panel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
 
         JTable tabla = crearTabla(modeloTablaVehiculos, 23);
@@ -283,6 +368,7 @@ public class InterfazSimulador extends JFrame {
 
     private JPanel crearPanelResumenGeneral() {
         JPanel panel = new JPanel(new GridLayout(2, 2, 8, 8));
+        panel.setBackground(GRIS_FONDO);
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         panel.add(crearPanelTablaResumen("Resumen operativo", modeloResumenOperativo));
         panel.add(crearPanelTablaResumen("Resumen economico", modeloResumenEconomico));
@@ -293,6 +379,7 @@ public class InterfazSimulador extends JFrame {
 
     private JPanel crearPanelTablaResumen(String titulo, DefaultTableModel modelo) {
         JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(BLANCO_TARJETA);
         panel.setBorder(crearBorde(titulo));
 
         JTable tabla = crearTabla(modelo, 22);
@@ -302,12 +389,68 @@ public class InterfazSimulador extends JFrame {
     }
 
     private JTable crearTabla(DefaultTableModel modelo, int altoFila) {
-        JTable tabla = new JTable(modelo);
+        JTable tabla = new JTable(modelo) {
+            @Override
+            public Component prepareRenderer(javax.swing.table.TableCellRenderer renderer, int row, int column) {
+                Component c = super.prepareRenderer(renderer, row, column);
+                if (!isRowSelected(row)) {
+                    c.setBackground(row % 2 == 0 ? Color.WHITE : new Color(247, 250, 252));
+                    c.setForeground(new Color(31, 41, 55));
+                }
+                return c;
+            }
+        };
         tabla.setFont(FUENTE_BASE);
         tabla.getTableHeader().setFont(FUENTE_BASE.deriveFont(Font.BOLD));
-        tabla.setRowHeight(altoFila);
+        tabla.getTableHeader().setBackground(GRIS_SUAVE);
+        tabla.getTableHeader().setForeground(Color.BLACK);
+        tabla.getTableHeader().setOpaque(true);
+        tabla.getTableHeader().setDefaultRenderer(crearRenderEncabezado());
+        tabla.setGridColor(new Color(226, 232, 240));
+        tabla.setSelectionBackground(new Color(202, 231, 242));
+        tabla.setSelectionForeground(new Color(20, 43, 60));
+        tabla.setRowHeight(Math.max(altoFila, 25));
         tabla.setFillsViewportHeight(true);
+        centrarColumnasNumericas(tabla);
         return tabla;
+    }
+
+    private DefaultTableCellRenderer crearRenderEncabezado() {
+        return new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(
+                    JTable table,
+                    Object value,
+                    boolean isSelected,
+                    boolean hasFocus,
+                    int row,
+                    int column
+            ) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                c.setBackground(GRIS_SUAVE);
+                c.setForeground(Color.BLACK);
+                c.setFont(FUENTE_BASE.deriveFont(Font.BOLD));
+                setHorizontalAlignment(JLabel.CENTER);
+                setBorder(BorderFactory.createCompoundBorder(
+                        BorderFactory.createLineBorder(GRIS_BORDE),
+                        BorderFactory.createEmptyBorder(4, 6, 4, 6)
+                ));
+                return c;
+            }
+        };
+    }
+
+    private void centrarColumnasNumericas(JTable tabla) {
+        DefaultTableCellRenderer centrado = new DefaultTableCellRenderer();
+        centrado.setHorizontalAlignment(JLabel.CENTER);
+        for (int i = 0; i < tabla.getColumnCount(); i++) {
+            String nombre = tabla.getColumnName(i).toLowerCase(Locale.US);
+            if (!nombre.contains("tipo") && !nombre.contains("carburante")
+                    && !nombre.contains("ruta") && !nombre.contains("estado")
+                    && !nombre.contains("motivo") && !nombre.contains("indicador")) {
+                tabla.getColumnModel().getColumn(i).setCellRenderer(centrado);
+            }
+        }
     }
 
     private void ajustarAnchos(JTable tabla, int... anchos) {
@@ -821,6 +964,72 @@ public class InterfazSimulador extends JFrame {
         }
     }
 
+    private void exportarCsv() {
+        if (ultimosResultados == null) {
+            JOptionPane.showMessageDialog(this,
+                    "No hay resultados para exportar.",
+                    "Exportar CSV",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Exportar CSV");
+        chooser.setSelectedFile(new File("resultados-simulacion.csv"));
+
+        if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+
+        File archivo = asegurarExtension(chooser.getSelectedFile(), ".csv");
+
+        try {
+            ExportadorCsv.exportar(archivo, ultimosResultados);
+            JOptionPane.showMessageDialog(this, "Resultados CSV exportados correctamente.");
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(this,
+                    "No se pudo exportar el CSV: " + ex.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void exportarExcel() {
+        if (ultimosResultados == null || ultimoResumen == null || ultimoSimulador == null) {
+            JOptionPane.showMessageDialog(this,
+                    "No hay resultados para exportar.",
+                    "Exportar Excel",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Exportar Excel");
+        chooser.setSelectedFile(new File("resultados-simulacion.xlsx"));
+
+        if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+
+        File archivo = asegurarExtension(chooser.getSelectedFile(), ".xlsx");
+
+        try {
+            ExportadorExcel.exportar(
+                    archivo,
+                    obtenerConfiguracion(),
+                    ultimoResumen,
+                    ultimoSimulador,
+                    ultimosResultados
+            );
+            JOptionPane.showMessageDialog(this, "Resultados Excel exportados correctamente.");
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(this,
+                    "No se pudo exportar el Excel: " + ex.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
     private File asegurarExtension(File archivo, String extension) {
         if (archivo.getName().toLowerCase(Locale.US).endsWith(extension)) {
             return archivo;
@@ -941,6 +1150,8 @@ public class InterfazSimulador extends JFrame {
             UIManager.put("TextField.font", FUENTE_BASE);
             UIManager.put("Table.font", FUENTE_BASE);
             UIManager.put("TableHeader.font", FUENTE_BASE.deriveFont(Font.BOLD));
+            UIManager.put("TableHeader.foreground", Color.BLACK);
+            UIManager.put("TableHeader.background", GRIS_SUAVE);
             UIManager.put("TabbedPane.font", FUENTE_BASE);
             UIManager.put("TitledBorder.font", FUENTE_BASE.deriveFont(Font.BOLD));
         } catch (Exception ex) {

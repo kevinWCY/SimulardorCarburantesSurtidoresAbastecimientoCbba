@@ -12,15 +12,15 @@ import java.util.Map;
 
 public class GraficoResultadosPanel extends JPanel {
 
-    private static final Color FONDO = new Color(245, 247, 250);
+    private static final Color FONDO = new Color(241, 244, 248);
     private static final Color TARJETA = Color.WHITE;
-    private static final Color BORDE = new Color(215, 222, 232);
+    private static final Color BORDE = new Color(207, 216, 226);
     private static final Color TEXTO = new Color(32, 41, 55);
     private static final Color TEXTO_SUAVE = new Color(95, 107, 124);
-    private static final Color SUBVENCIONADO = new Color(43, 120, 184);
-    private static final Color INTERNACIONAL = new Color(229, 133, 55);
-    private static final Color NO_ATENDIDO = new Color(190, 69, 69);
-    private static final Color VERDE = new Color(72, 157, 98);
+    private static final Color SUBVENCIONADO = new Color(22, 84, 112);
+    private static final Color INTERNACIONAL = new Color(221, 132, 48);
+    private static final Color NO_ATENDIDO = new Color(184, 82, 82);
+    private static final Color VERDE = new Color(56, 142, 93);
     private static final Color MORADO = new Color(126, 96, 191);
     private static final Font FUENTE = new Font("SansSerif", Font.PLAIN, 13);
     private static final Font FUENTE_TITULO = new Font("SansSerif", Font.BOLD, 16);
@@ -115,6 +115,8 @@ public class GraficoResultadosPanel extends JPanel {
 
     private void dibujarPanel(Graphics2D g2, int x, int y, int w, int h, String titulo) {
         tarjeta(g2, x, y, w, h);
+        g2.setColor(new Color(233, 241, 245));
+        g2.fillRoundRect(x + 10, y + 8, w - 20, 28, 10, 10);
         g2.setColor(TEXTO);
         g2.setFont(FUENTE_TITULO);
         g2.drawString(titulo, x + 16, y + 26);

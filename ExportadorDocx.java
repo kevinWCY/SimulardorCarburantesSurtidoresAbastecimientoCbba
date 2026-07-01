@@ -138,6 +138,7 @@ public class ExportadorDocx {
 
         titulo2(xml, "Resultados por vehiculo");
         tablaResultados(xml, resultados);
+        parrafo(xml, "Para revisar la tabla completa de vehiculos simulados, exporte los resultados en CSV o Excel.");
 
         xml.append("<w:sectPr><w:pgSz w:w=\"16838\" w:h=\"11906\" w:orient=\"landscape\"/>");
         xml.append("<w:pgMar w:top=\"720\" w:right=\"720\" w:bottom=\"720\" w:left=\"720\"/></w:sectPr>");
@@ -190,25 +191,11 @@ public class ExportadorDocx {
     }
 
     private static void tablaResultados(StringBuilder xml, List<ResultadoVehiculo> resultados) {
-        String[] encabezados = {
-                "i", "HL", "tipoVehiculo", "carburante", "litros", "TS", "Wsub", "Wint",
-                "Csub", "Cint", "ruta", "surtidor", "inicio", "fin", "esperaReal", "WT",
-                "estado", "precioAplicado", "ingresoGenerado", "perdidaEstimada",
-                "motivoNoAtendido", "inventarioAntes", "inventarioDespues"
-        };
-        String[][] datos = new String[resultados.size() + 1][encabezados.length];
-        datos[0] = encabezados;
-        for (int i = 0; i < resultados.size(); i++) {
-            ResultadoVehiculo r = resultados.get(i);
-            datos[i + 1] = new String[]{
-                    String.valueOf(r.getId()), f(r.getHoraLlegada()), r.getTipoVehiculo(), r.getCarburante(),
-                    f(r.getLitros()), f(r.getTiempoServicio()), f(r.getEsperaSub()), f(r.getEsperaInt()),
-                    f(r.getCostoSub()), f(r.getCostoInt()), r.getDecision(), r.getSurtidor(),
-                    f(r.getInicio()), f(r.getFin()), f(r.getEsperaReal()), f(r.getTiempoTotal()),
-                    r.getEstado(), f(r.getPrecioAplicado()), f(r.getIngresoGenerado()),
-                    f(r.getPerdidaEstimada()), r.getMotivoNoAtendido(), f(r.getInventarioAntes()),
-                    f(r.getInventarioDespues())
-            };
+        int limite = Math.min(100, resultados.size());
+        String[][] datos = new String[limite + 1][ExportadorResultados.ENCABEZADOS.length];
+        datos[0] = ExportadorResultados.ENCABEZADOS;
+        for (int i = 0; i < limite; i++) {
+            datos[i + 1] = ExportadorResultados.fila(resultados.get(i));
         }
         tabla(xml, datos);
     }
