@@ -15,8 +15,10 @@ public class Main {
 
         int n = leerEntero(sc, "Cantidad de vehiculos a simular", 50);
         double lambda = leerDecimal(sc, "Lambda llegadas vehiculos/min", 1.50);
-        int trimestre = leerEntero(sc, "Trimestre a simular", 4);
+        int trimestre = leerEntero(sc, "Cantidad de periodos", 4);
         long semilla = leerLong(sc, "Semilla aleatoria", 100);
+        String periodicidad = "Trimestral";
+        System.out.println("Periodicidad [" + periodicidad + "]");
 
         Simulador simulador = new Simulador(
                 n,
@@ -34,7 +36,16 @@ public class Main {
                 15000,
                 25000,
                 5,
-                10
+                10,
+                Simulador.GASOLINA_BASE_SUBVENCIONADA_DEFECTO,
+                Simulador.GASOLINA_INCREMENTO_DEFECTO,
+                Simulador.GASOLINA_INTERNACIONAL_DEFECTO,
+                Simulador.DIESEL_BASE_SUBVENCIONADA_DEFECTO,
+                Simulador.DIESEL_INCREMENTO_DEFECTO,
+                Simulador.DIESEL_INTERNACIONAL_DEFECTO,
+                Simulador.GNV_BASE_SUBVENCIONADA_DEFECTO,
+                Simulador.GNV_INCREMENTO_DEFECTO,
+                Simulador.GNV_INTERNACIONAL_DEFECTO
         );
 
         List<ResultadoVehiculo> resultados = simulador.ejecutar();

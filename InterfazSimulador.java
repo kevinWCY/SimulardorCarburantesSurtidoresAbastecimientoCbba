@@ -1,6 +1,7 @@
 // InterfazSimulador.java
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -10,26 +11,32 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumnModel;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
-import java.util.LinkedHashMap;
+import java.awt.Insets;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.List;
 
 public class InterfazSimulador extends JFrame {
+
+    private static final Font FUENTE_BASE = new Font("SansSerif", Font.PLAIN, 13);
+    private static final Dimension TAMANIO_CAMPO = new Dimension(110, 26);
 
     private final JTextField txtN;
     private final JTextField txtLambda;
     private final JTextField txtTrimestre;
+    private final JComboBox<String> cboPeriodicidad;
     private final JTextField txtSemilla;
-    private final JTextField txtPrecioInicial;
-    private final JTextField txtIncremento;
-    private final JTextField txtPrecioInternacional;
     private final JTextField txtInventarioInicial;
     private final JTextField txtCapacidadMaxima;
     private final JTextField txtNivelMinimo;
@@ -40,8 +47,8 @@ public class InterfazSimulador extends JFrame {
     private final JTextField txtDescargaMin;
     private final JTextField txtDescargaMax;
 
-    private final Map<String, JTextField[]> camposPerfiles;
-
+    private final DefaultTableModel modeloPerfiles;
+    private final DefaultTableModel modeloPrecios;
     private final DefaultTableModel modeloTablaVehiculos;
     private final DefaultTableModel modeloResumenOperativo;
     private final DefaultTableModel modeloResumenEconomico;
@@ -54,29 +61,29 @@ public class InterfazSimulador extends JFrame {
         Locale.setDefault(Locale.US);
 
         setTitle("Simulador de Surtidores de Combustibles - Java");
-        setSize(1400, 820);
-        setMinimumSize(new Dimension(1180, 720));
+        setSize(1200, 750);
+        setMinimumSize(new Dimension(1060, 680));
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        txtN = new JTextField();
-        txtLambda = new JTextField();
-        txtTrimestre = new JTextField();
-        txtSemilla = new JTextField();
-        txtPrecioInicial = new JTextField();
-        txtIncremento = new JTextField();
-        txtPrecioInternacional = new JTextField();
-        txtInventarioInicial = new JTextField();
-        txtCapacidadMaxima = new JTextField();
-        txtNivelMinimo = new JTextField();
-        txtTiempoCisternaMin = new JTextField();
-        txtTiempoCisternaMax = new JTextField();
-        txtCargaCisternaMin = new JTextField();
-        txtCargaCisternaMax = new JTextField();
-        txtDescargaMin = new JTextField();
-        txtDescargaMax = new JTextField();
-        camposPerfiles = new LinkedHashMap<>();
+        txtN = crearCampo();
+        txtLambda = crearCampo();
+        txtTrimestre = crearCampo();
+        cboPeriodicidad = new JComboBox<>(new String[]{"Mensual", "Bimestral", "Trimestral", "Semestral", "Anual"});
+        cboPeriodicidad.setFont(FUENTE_BASE);
+        txtSemilla = crearCampo();
+        txtInventarioInicial = crearCampo();
+        txtCapacidadMaxima = crearCampo();
+        txtNivelMinimo = crearCampo();
+        txtTiempoCisternaMin = crearCampo();
+        txtTiempoCisternaMax = crearCampo();
+        txtCargaCisternaMin = crearCampo();
+        txtCargaCisternaMax = crearCampo();
+        txtDescargaMin = crearCampo();
+        txtDescargaMax = crearCampo();
 
+        modeloPerfiles = crearModeloPerfiles();
+        modeloPrecios = crearModeloPrecios();
         modeloTablaVehiculos = new DefaultTableModel();
         modeloResumenOperativo = new DefaultTableModel();
         modeloResumenEconomico = new DefaultTableModel();
@@ -88,136 +95,204 @@ public class InterfazSimulador extends JFrame {
         restaurarValoresPorDefecto();
 
         JTabbedPane tabs = new JTabbedPane();
+        tabs.setFont(FUENTE_BASE);
         tabs.addTab("Parametros", crearPanelParametros());
-        tabs.addTab("Resultados por vehiculo", crearPanelTabla(modeloTablaVehiculos));
-        tabs.addTab("Resumen operativo", crearPanelTabla(modeloResumenOperativo));
-        tabs.addTab("Resumen economico", crearPanelTabla(modeloResumenEconomico));
-        tabs.addTab("Resumen de abastecimiento", crearPanelTabla(modeloResumenAbastecimiento));
-        tabs.addTab("Utilizacion de surtidores", crearPanelTabla(modeloUtilizacion));
+        tabs.addTab("Resultados por vehiculo", crearPanelResultadosVehiculo());
+        tabs.addTab("Resumen general", crearPanelResumenGeneral());
         tabs.addTab("Graficas", new JScrollPane(panelGraficos));
 
         add(tabs, BorderLayout.CENTER);
     }
 
+    private JTextField crearCampo() {
+        JTextField campo = new JTextField();
+        campo.setFont(FUENTE_BASE);
+        campo.setPreferredSize(TAMANIO_CAMPO);
+        campo.setMinimumSize(TAMANIO_CAMPO);
+        return campo;
+    }
+
     private JPanel crearPanelParametros() {
-        JPanel contenedor = new JPanel(new BorderLayout(10, 10));
-        contenedor.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
+        JPanel contenedor = new JPanel(new BorderLayout(8, 8));
+        contenedor.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        JPanel secciones = new JPanel(new GridLayout(1, 3, 12, 12));
-        secciones.add(crearPanelParametrosGenerales());
-        secciones.add(crearPanelPerfiles());
-        secciones.add(crearPanelAbastecimiento());
+        JPanel filaSuperior = new JPanel(new GridLayout(1, 2, 8, 8));
+        filaSuperior.add(crearPanelParametrosGenerales());
+        filaSuperior.add(crearPanelPrecios());
 
-        JPanel botones = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 4));
-        JButton btnEjecutar = new JButton("Ejecutar simulacion");
-        JButton btnLimpiar = new JButton("Limpiar resultados");
-        JButton btnRestaurar = new JButton("Restaurar valores por defecto");
+        JPanel filaCentral = new JPanel(new GridLayout(1, 2, 8, 8));
+        filaCentral.add(crearPanelPerfiles());
+        filaCentral.add(crearPanelAbastecimiento());
 
-        btnEjecutar.addActionListener(e -> ejecutarSimulacion());
-        btnLimpiar.addActionListener(e -> limpiarResultados());
-        btnRestaurar.addActionListener(e -> restaurarValoresPorDefecto());
+        JPanel centro = new JPanel(new GridLayout(2, 1, 8, 8));
+        centro.add(filaSuperior);
+        centro.add(filaCentral);
 
-        botones.add(btnLimpiar);
-        botones.add(btnRestaurar);
-        botones.add(btnEjecutar);
-
-        contenedor.add(secciones, BorderLayout.CENTER);
-        contenedor.add(botones, BorderLayout.SOUTH);
+        contenedor.add(centro, BorderLayout.CENTER);
+        contenedor.add(crearBarraAcciones(), BorderLayout.SOUTH);
         return contenedor;
     }
 
     private JPanel crearPanelParametrosGenerales() {
-        JPanel panel = crearPanelTitulado("Parametros generales", 7);
-        agregarCampo(panel, "N vehiculos", txtN);
-        agregarCampo(panel, "Lambda", txtLambda);
-        agregarCampo(panel, "Trimestre", txtTrimestre);
-        agregarCampo(panel, "Semilla", txtSemilla);
-        agregarCampo(panel, "Precio inicial subv.", txtPrecioInicial);
-        agregarCampo(panel, "Incremento trimestral", txtIncremento);
-        agregarCampo(panel, "Precio internacional", txtPrecioInternacional);
+        JPanel panel = crearPanelFormulario("Parametros generales");
+        agregarCampo(panel, "N vehiculos", txtN, 0);
+        agregarCampo(panel, "Lambda", txtLambda, 1);
+        agregarCampo(panel, "Cantidad de periodos", txtTrimestre, 2);
+        agregarCombo(panel, "Periodicidad", cboPeriodicidad, 3);
+        agregarCampo(panel, "Semilla", txtSemilla, 4);
+        return panel;
+    }
+
+    private JPanel crearPanelPrecios() {
+        JPanel panel = new JPanel(new BorderLayout(4, 4));
+        panel.setBorder(crearBorde("Precios por carburante"));
+
+        JTable tabla = crearTabla(modeloPrecios, 24);
+        tabla.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+        ajustarAnchos(tabla, 110, 160, 150, 140);
+
+        panel.add(new JScrollPane(tabla), BorderLayout.CENTER);
         return panel;
     }
 
     private JPanel crearPanelPerfiles() {
-        JPanel panel = crearPanelTitulado("Perfiles de vehiculos", 5);
-        agregarPerfil(panel, "Particular", "20", "45", "3", "6", "30");
-        agregarPerfil(panel, "Publico", "25", "60", "4", "7", "60");
-        agregarPerfil(panel, "Interprovincial", "60", "150", "5", "9", "100");
-        agregarPerfil(panel, "Pesado", "200", "400", "7", "12", "150");
+        JPanel panel = new JPanel(new BorderLayout(4, 4));
+        panel.setBorder(crearBorde("Perfiles de vehiculos"));
+
+        JTable tabla = crearTabla(modeloPerfiles, 22);
+        tabla.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+        ajustarAnchos(tabla, 120, 55, 55, 55, 55, 70);
+
+        panel.add(new JScrollPane(tabla), BorderLayout.CENTER);
         return panel;
     }
 
     private JPanel crearPanelAbastecimiento() {
-        JPanel panel = crearPanelTitulado("Abastecimiento por cisternas", 9);
-        agregarCampo(panel, "Inventario inicial", txtInventarioInicial);
-        agregarCampo(panel, "Capacidad maxima", txtCapacidadMaxima);
-        agregarCampo(panel, "Nivel minimo", txtNivelMinimo);
-        agregarCampo(panel, "Tiempo cisterna min", txtTiempoCisternaMin);
-        agregarCampo(panel, "Tiempo cisterna max", txtTiempoCisternaMax);
-        agregarCampo(panel, "Carga cisterna min", txtCargaCisternaMin);
-        agregarCampo(panel, "Carga cisterna max", txtCargaCisternaMax);
-        agregarCampo(panel, "Descarga min", txtDescargaMin);
-        agregarCampo(panel, "Descarga max", txtDescargaMax);
+        JPanel panel = crearPanelFormulario("Abastecimiento por cisternas");
+        agregarCampo(panel, "Inventario inicial", txtInventarioInicial, 0);
+        agregarCampo(panel, "Capacidad maxima", txtCapacidadMaxima, 1);
+        agregarCampo(panel, "Nivel minimo", txtNivelMinimo, 2);
+        agregarCampo(panel, "Tiempo cisterna min", txtTiempoCisternaMin, 3);
+        agregarCampo(panel, "Tiempo cisterna max", txtTiempoCisternaMax, 4);
+        agregarCampo(panel, "Carga cisterna min", txtCargaCisternaMin, 5);
+        agregarCampo(panel, "Carga cisterna max", txtCargaCisternaMax, 6);
+        agregarCampo(panel, "Descarga min", txtDescargaMin, 7);
+        agregarCampo(panel, "Descarga max", txtDescargaMax, 8);
         return panel;
     }
 
-    private JPanel crearPanelTitulado(String titulo, int filas) {
-        JPanel panel = new JPanel(new GridLayout(filas, 2, 8, 8));
+    private JPanel crearPanelFormulario(String titulo) {
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setBorder(crearBorde(titulo));
+        return panel;
+    }
+
+    private TitledBorder crearBorde(String titulo) {
         TitledBorder borde = BorderFactory.createTitledBorder(titulo);
-        panel.setBorder(BorderFactory.createCompoundBorder(
-                borde,
-                BorderFactory.createEmptyBorder(8, 8, 8, 8)
-        ));
+        borde.setTitleFont(FUENTE_BASE.deriveFont(Font.BOLD));
+        return borde;
+    }
+
+    private void agregarCampo(JPanel panel, String etiqueta, JTextField campo, int fila) {
+        GridBagConstraints label = new GridBagConstraints();
+        label.gridx = 0;
+        label.gridy = fila;
+        label.anchor = GridBagConstraints.WEST;
+        label.insets = new Insets(3, 8, 3, 8);
+        panel.add(new JLabel(etiqueta + ":"), label);
+
+        GridBagConstraints input = new GridBagConstraints();
+        input.gridx = 1;
+        input.gridy = fila;
+        input.anchor = GridBagConstraints.WEST;
+        input.insets = new Insets(3, 2, 3, 8);
+        panel.add(campo, input);
+    }
+
+    private void agregarCombo(JPanel panel, String etiqueta, JComboBox<String> combo, int fila) {
+        GridBagConstraints label = new GridBagConstraints();
+        label.gridx = 0;
+        label.gridy = fila;
+        label.anchor = GridBagConstraints.WEST;
+        label.insets = new Insets(3, 8, 3, 8);
+        panel.add(new JLabel(etiqueta + ":"), label);
+
+        GridBagConstraints input = new GridBagConstraints();
+        input.gridx = 1;
+        input.gridy = fila;
+        input.anchor = GridBagConstraints.WEST;
+        input.insets = new Insets(3, 2, 3, 8);
+        combo.setPreferredSize(new Dimension(130, 26));
+        panel.add(combo, input);
+    }
+
+    private JPanel crearBarraAcciones() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBorder(crearBorde("Acciones"));
+
+        JPanel botones = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 6));
+        JButton btnLimpiar = new JButton("Limpiar resultados");
+        JButton btnRestaurar = new JButton("Restaurar valores por defecto");
+        JButton btnEjecutar = new JButton("Ejecutar simulacion");
+
+        btnLimpiar.addActionListener(e -> limpiarResultados());
+        btnRestaurar.addActionListener(e -> restaurarValoresPorDefecto());
+        btnEjecutar.addActionListener(e -> ejecutarSimulacion());
+
+        botones.add(btnLimpiar);
+        botones.add(btnRestaurar);
+        botones.add(btnEjecutar);
+        panel.add(botones, BorderLayout.EAST);
         return panel;
     }
 
-    private void agregarCampo(JPanel panel, String etiqueta, JTextField campo) {
-        panel.add(new JLabel(etiqueta + ":"));
-        panel.add(campo);
-    }
-
-    private void agregarPerfil(
-            JPanel panel,
-            String tipo,
-            String litrosMin,
-            String litrosMax,
-            String servicioMin,
-            String servicioMax,
-            String costoOportunidad
-    ) {
-        JPanel fila = new JPanel(new GridLayout(1, 5, 4, 4));
-        JTextField txtLitrosMin = new JTextField(litrosMin);
-        JTextField txtLitrosMax = new JTextField(litrosMax);
-        JTextField txtServicioMin = new JTextField(servicioMin);
-        JTextField txtServicioMax = new JTextField(servicioMax);
-        JTextField txtCosto = new JTextField(costoOportunidad);
-
-        fila.add(txtLitrosMin);
-        fila.add(txtLitrosMax);
-        fila.add(txtServicioMin);
-        fila.add(txtServicioMax);
-        fila.add(txtCosto);
-
-        camposPerfiles.put(tipo, new JTextField[]{
-                txtLitrosMin,
-                txtLitrosMax,
-                txtServicioMin,
-                txtServicioMax,
-                txtCosto
-        });
-
-        panel.add(new JLabel(tipo + " Lmin/Lmax TSmin/TSmax Costo:"));
-        panel.add(fila);
-    }
-
-    private JPanel crearPanelTabla(DefaultTableModel modelo) {
+    private JPanel crearPanelResultadosVehiculo() {
         JPanel panel = new JPanel(new BorderLayout());
-        JTable tabla = new JTable(modelo);
-        tabla.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-        tabla.setRowHeight(24);
         panel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
+
+        JTable tabla = crearTabla(modeloTablaVehiculos, 23);
+        tabla.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+        ajustarAnchos(tabla, 45, 65, 130, 95, 75, 60, 70, 70, 85, 85, 115,
+                70, 70, 70, 85, 70, 95, 105, 115, 115, 115, 115, 130);
+
         panel.add(new JScrollPane(tabla), BorderLayout.CENTER);
         return panel;
+    }
+
+    private JPanel crearPanelResumenGeneral() {
+        JPanel panel = new JPanel(new GridLayout(2, 2, 8, 8));
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        panel.add(crearPanelTablaResumen("Resumen operativo", modeloResumenOperativo));
+        panel.add(crearPanelTablaResumen("Resumen economico", modeloResumenEconomico));
+        panel.add(crearPanelTablaResumen("Resumen de abastecimiento", modeloResumenAbastecimiento));
+        panel.add(crearPanelTablaResumen("Utilizacion de surtidores", modeloUtilizacion));
+        return panel;
+    }
+
+    private JPanel crearPanelTablaResumen(String titulo, DefaultTableModel modelo) {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBorder(crearBorde(titulo));
+
+        JTable tabla = crearTabla(modelo, 22);
+        tabla.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+        panel.add(new JScrollPane(tabla), BorderLayout.CENTER);
+        return panel;
+    }
+
+    private JTable crearTabla(DefaultTableModel modelo, int altoFila) {
+        JTable tabla = new JTable(modelo);
+        tabla.setFont(FUENTE_BASE);
+        tabla.getTableHeader().setFont(FUENTE_BASE.deriveFont(Font.BOLD));
+        tabla.setRowHeight(altoFila);
+        tabla.setFillsViewportHeight(true);
+        return tabla;
+    }
+
+    private void ajustarAnchos(JTable tabla, int... anchos) {
+        TableColumnModel columnas = tabla.getColumnModel();
+        for (int i = 0; i < anchos.length && i < columnas.getColumnCount(); i++) {
+            columnas.getColumn(i).setPreferredWidth(anchos[i]);
+        }
     }
 
     private void configurarModelos() {
@@ -225,14 +300,37 @@ public class InterfazSimulador extends JFrame {
                 "i", "HL", "tipoVehiculo", "carburante", "litros", "TS",
                 "Wsub", "Wint", "Csub", "Cint", "ruta", "surtidor",
                 "inicio", "fin", "esperaReal", "WT", "estado",
-                "ingresoGenerado", "perdidaEstimada", "inventarioAntes",
-                "inventarioDespues"
+                "precioAplicado", "ingresoGenerado", "perdidaEstimada",
+                "inventarioAntes", "inventarioDespues", "motivoNoAtendido"
         );
 
         agregarColumnas(modeloResumenOperativo, "Indicador", "Valor");
         agregarColumnas(modeloResumenEconomico, "Indicador", "Valor");
         agregarColumnas(modeloResumenAbastecimiento, "Indicador", "Valor");
         agregarColumnas(modeloUtilizacion, "Surtidor", "Vehiculos atendidos", "Utilizacion");
+    }
+
+    private DefaultTableModel crearModeloPerfiles() {
+        return new DefaultTableModel(new Object[]{"Perfil", "L min", "L max", "TS min", "TS max", "CO Bs/h"}, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return column != 0;
+            }
+        };
+    }
+
+    private DefaultTableModel crearModeloPrecios() {
+        return new DefaultTableModel(new Object[]{
+                "Carburante",
+                "Precio base subvencionado",
+                "Incremento por periodo",
+                "Precio internacional"
+        }, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return column != 0;
+            }
+        };
     }
 
     private void agregarColumnas(DefaultTableModel modelo, String... columnas) {
@@ -245,11 +343,18 @@ public class InterfazSimulador extends JFrame {
         try {
             int n = leerEntero(txtN.getText(), "N vehiculos");
             double lambda = leerDecimal(txtLambda.getText(), "Lambda");
-            int trimestre = leerEntero(txtTrimestre.getText(), "Trimestre");
+            int trimestre = leerEntero(txtTrimestre.getText(), "Cantidad de periodos");
+            String periodicidad = String.valueOf(cboPeriodicidad.getSelectedItem());
             long semilla = leerLong(txtSemilla.getText(), "Semilla");
-            double precioInicial = leerDecimal(txtPrecioInicial.getText(), "Precio inicial");
-            double incremento = leerDecimal(txtIncremento.getText(), "Incremento trimestral");
-            double precioInternacional = leerDecimal(txtPrecioInternacional.getText(), "Precio internacional");
+            double gasolinaBaseSub = leerPrecio("Gasolina", 1);
+            double gasolinaIncremento = leerPrecio("Gasolina", 2);
+            double gasolinaInt = leerPrecio("Gasolina", 3);
+            double dieselBaseSub = leerPrecio("Diesel", 1);
+            double dieselIncremento = leerPrecio("Diesel", 2);
+            double dieselInt = leerPrecio("Diesel", 3);
+            double gnvBaseSub = leerPrecio("GNV", 1);
+            double gnvIncremento = leerPrecio("GNV", 2);
+            double gnvInt = leerPrecio("GNV", 3);
             double inventarioInicial = leerDecimal(txtInventarioInicial.getText(), "Inventario inicial");
             double capacidadMaxima = leerDecimal(txtCapacidadMaxima.getText(), "Capacidad maxima");
             double nivelMinimo = leerDecimal(txtNivelMinimo.getText(), "Nivel minimo");
@@ -262,13 +367,14 @@ public class InterfazSimulador extends JFrame {
 
             validarParametros(n, lambda, capacidadMaxima, tiempoCisternaMin, tiempoCisternaMax,
                     cargaCisternaMin, cargaCisternaMax, descargaMin, descargaMax);
+            validarPrecios(trimestre);
 
             Simulador simulador = new Simulador(
                     n,
                     lambda,
-                    precioInicial,
-                    incremento,
-                    precioInternacional,
+                    gasolinaBaseSub,
+                    gasolinaIncremento,
+                    gasolinaInt,
                     trimestre,
                     semilla,
                     inventarioInicial,
@@ -279,7 +385,16 @@ public class InterfazSimulador extends JFrame {
                     cargaCisternaMin,
                     cargaCisternaMax,
                     descargaMin,
-                    descargaMax
+                    descargaMax,
+                    gasolinaBaseSub,
+                    gasolinaIncremento,
+                    gasolinaInt,
+                    dieselBaseSub,
+                    dieselIncremento,
+                    dieselInt,
+                    gnvBaseSub,
+                    gnvIncremento,
+                    gnvInt
             );
 
             configurarPerfiles(simulador);
@@ -296,7 +411,8 @@ public class InterfazSimulador extends JFrame {
 
             JOptionPane.showMessageDialog(
                     this,
-                    "Simulacion ejecutada correctamente con " + n + " vehiculos.",
+                    "Simulacion ejecutada correctamente con " + n
+                            + " vehiculos. Periodicidad: " + periodicidad + ".",
                     "Resultado",
                     JOptionPane.INFORMATION_MESSAGE
             );
@@ -312,27 +428,82 @@ public class InterfazSimulador extends JFrame {
     }
 
     private void configurarPerfiles(Simulador simulador) {
-        for (Map.Entry<String, JTextField[]> entry : camposPerfiles.entrySet()) {
-            JTextField[] campos = entry.getValue();
-            double litrosMin = leerDecimal(campos[0].getText(), entry.getKey() + " litros minimos");
-            double litrosMax = leerDecimal(campos[1].getText(), entry.getKey() + " litros maximos");
-            double servicioMin = leerDecimal(campos[2].getText(), entry.getKey() + " servicio minimo");
-            double servicioMax = leerDecimal(campos[3].getText(), entry.getKey() + " servicio maximo");
-            double costo = leerDecimal(campos[4].getText(), entry.getKey() + " costo de oportunidad");
+        for (int fila = 0; fila < modeloPerfiles.getRowCount(); fila++) {
+            String perfilVisible = String.valueOf(modeloPerfiles.getValueAt(fila, 0));
+            String perfilSimulador = nombrePerfilSimulador(perfilVisible);
+            double litrosMin = leerDecimal(valorTabla(fila, 1), perfilVisible + " litros minimos");
+            double litrosMax = leerDecimal(valorTabla(fila, 2), perfilVisible + " litros maximos");
+            double servicioMin = leerDecimal(valorTabla(fila, 3), perfilVisible + " servicio minimo");
+            double servicioMax = leerDecimal(valorTabla(fila, 4), perfilVisible + " servicio maximo");
+            double costo = leerDecimal(valorTabla(fila, 5), perfilVisible + " costo de oportunidad");
 
             if (litrosMin < 0 || litrosMax < litrosMin) {
-                throw new IllegalArgumentException("Rango de litros invalido en " + entry.getKey() + ".");
+                throw new IllegalArgumentException("Rango de litros invalido en " + perfilVisible + ".");
             }
 
             if (servicioMin < 0 || servicioMax < servicioMin) {
-                throw new IllegalArgumentException("Rango de servicio invalido en " + entry.getKey() + ".");
+                throw new IllegalArgumentException("Rango de servicio invalido en " + perfilVisible + ".");
             }
 
             if (costo < 0) {
-                throw new IllegalArgumentException("Costo de oportunidad invalido en " + entry.getKey() + ".");
+                throw new IllegalArgumentException("Costo de oportunidad invalido en " + perfilVisible + ".");
             }
 
-            simulador.configurarPerfil(entry.getKey(), litrosMin, litrosMax, servicioMin, servicioMax, costo);
+            simulador.configurarPerfil(perfilSimulador, litrosMin, litrosMax, servicioMin, servicioMax, costo);
+        }
+    }
+
+    private String valorTabla(int fila, int columna) {
+        Object valor = modeloPerfiles.getValueAt(fila, columna);
+        return valor == null ? "" : valor.toString();
+    }
+
+    private String nombrePerfilSimulador(String perfilVisible) {
+        if (perfilVisible.equals("Publico urbano")) {
+            return "Publico";
+        }
+        return perfilVisible;
+    }
+
+    private double leerPrecio(String carburante, int columna) {
+        for (int fila = 0; fila < modeloPrecios.getRowCount(); fila++) {
+            Object nombre = modeloPrecios.getValueAt(fila, 0);
+            if (nombre != null && carburante.equalsIgnoreCase(nombre.toString())) {
+                Object valor = modeloPrecios.getValueAt(fila, columna);
+                return leerDecimal(valor == null ? "" : valor.toString(),
+                        carburante + " " + modeloPrecios.getColumnName(columna));
+            }
+        }
+        throw new IllegalArgumentException("No existe precio configurado para " + carburante + ".");
+    }
+
+    private void validarPrecios(int cantidadPeriodos) {
+        if (cantidadPeriodos < 0) {
+            throw new IllegalArgumentException("La cantidad de periodos no puede ser negativa.");
+        }
+
+        for (int fila = 0; fila < modeloPrecios.getRowCount(); fila++) {
+            String carburante = String.valueOf(modeloPrecios.getValueAt(fila, 0));
+            double precioBase = leerPrecio(carburante, 1);
+            double incremento = leerPrecio(carburante, 2);
+            double precioInternacional = leerPrecio(carburante, 3);
+
+            if (precioBase < 0) {
+                throw new IllegalArgumentException("El precio base subvencionado de " + carburante + " no puede ser negativo.");
+            }
+
+            if (incremento < 0) {
+                throw new IllegalArgumentException("El incremento por periodo de " + carburante + " no puede ser negativo.");
+            }
+
+            if (precioInternacional < 0) {
+                throw new IllegalArgumentException("El precio internacional de " + carburante + " no puede ser negativo.");
+            }
+
+            if (precioBase > precioInternacional) {
+                throw new IllegalArgumentException("Advertencia: el precio base subvencionado de "
+                        + carburante + " no debe superar su precio internacional.");
+            }
         }
     }
 
@@ -394,10 +565,12 @@ public class InterfazSimulador extends JFrame {
                     formato(r.getEsperaReal()),
                     formato(r.getTiempoTotal()),
                     r.getEstado(),
+                    formato(r.getPrecioAplicado()),
                     formato(r.getIngresoGenerado()),
                     formato(r.getPerdidaEstimada()),
                     formato(r.getInventarioAntes()),
-                    formato(r.getInventarioDespues())
+                    formato(r.getInventarioDespues()),
+                    r.getMotivoNoAtendido()
             });
         }
     }
@@ -466,10 +639,8 @@ public class InterfazSimulador extends JFrame {
         txtN.setText("500");
         txtLambda.setText("1.50");
         txtTrimestre.setText("4");
+        cboPeriodicidad.setSelectedItem("Trimestral");
         txtSemilla.setText("100");
-        txtPrecioInicial.setText("6.96");
-        txtIncremento.setText("1.32");
-        txtPrecioInternacional.setText("12.36");
         txtInventarioInicial.setText("3000");
         txtCapacidadMaxima.setText("30000");
         txtNivelMinimo.setText("3000");
@@ -480,30 +651,16 @@ public class InterfazSimulador extends JFrame {
         txtDescargaMin.setText("5");
         txtDescargaMax.setText("10");
 
-        setPerfil("Particular", "20", "45", "3", "6", "30");
-        setPerfil("Publico", "25", "60", "4", "7", "60");
-        setPerfil("Interprovincial", "60", "150", "5", "9", "100");
-        setPerfil("Pesado", "200", "400", "7", "12", "150");
-    }
+        modeloPerfiles.setRowCount(0);
+        modeloPerfiles.addRow(new Object[]{"Particular", "20", "45", "3", "6", "30"});
+        modeloPerfiles.addRow(new Object[]{"Publico urbano", "25", "60", "4", "7", "60"});
+        modeloPerfiles.addRow(new Object[]{"Interprovincial", "60", "150", "5", "9", "100"});
+        modeloPerfiles.addRow(new Object[]{"Pesado", "200", "400", "7", "12", "150"});
 
-    private void setPerfil(
-            String tipo,
-            String litrosMin,
-            String litrosMax,
-            String servicioMin,
-            String servicioMax,
-            String costo
-    ) {
-        JTextField[] campos = camposPerfiles.get(tipo);
-        if (campos == null) {
-            return;
-        }
-
-        campos[0].setText(litrosMin);
-        campos[1].setText(litrosMax);
-        campos[2].setText(servicioMin);
-        campos[3].setText(servicioMax);
-        campos[4].setText(costo);
+        modeloPrecios.setRowCount(0);
+        modeloPrecios.addRow(new Object[]{"Gasolina", "6.96", "1.32", "8.68"});
+        modeloPrecios.addRow(new Object[]{"Diesel", "9.80", "0.00", "9.80"});
+        modeloPrecios.addRow(new Object[]{"GNV", "2.73", "0.00", "2.90"});
     }
 
     private int leerEntero(String texto, String campo) {
@@ -534,7 +691,30 @@ public class InterfazSimulador extends JFrame {
         return String.format(Locale.US, "%.2f", valor);
     }
 
+    private static void aplicarLookAndFeel() {
+        try {
+            for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    UIManager.setLookAndFeel(info.getClassName());
+                    break;
+                }
+            }
+
+            UIManager.put("defaultFont", FUENTE_BASE);
+            UIManager.put("Label.font", FUENTE_BASE);
+            UIManager.put("Button.font", FUENTE_BASE);
+            UIManager.put("TextField.font", FUENTE_BASE);
+            UIManager.put("Table.font", FUENTE_BASE);
+            UIManager.put("TableHeader.font", FUENTE_BASE.deriveFont(Font.BOLD));
+            UIManager.put("TabbedPane.font", FUENTE_BASE);
+            UIManager.put("TitledBorder.font", FUENTE_BASE.deriveFont(Font.BOLD));
+        } catch (Exception ex) {
+            System.err.println("No se pudo aplicar Nimbus. Se usara el Look and Feel por defecto.");
+        }
+    }
+
     public static void main(String[] args) {
+        aplicarLookAndFeel();
         SwingUtilities.invokeLater(() -> {
             InterfazSimulador ventana = new InterfazSimulador();
             ventana.setVisible(true);

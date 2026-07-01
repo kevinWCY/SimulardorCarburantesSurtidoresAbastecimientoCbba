@@ -16,12 +16,30 @@ public class Simulador {
     public static final double CARGA_CISTERNA_MAX_DEFECTO = 25000.0;
     public static final double DESCARGA_MIN_DEFECTO = 5.0;
     public static final double DESCARGA_MAX_DEFECTO = 10.0;
+    public static final double GASOLINA_BASE_SUBVENCIONADA_DEFECTO = 6.96;
+    public static final double GASOLINA_INCREMENTO_DEFECTO = 1.32;
+    public static final double GASOLINA_INTERNACIONAL_DEFECTO = 8.68;
+    public static final double DIESEL_BASE_SUBVENCIONADA_DEFECTO = 9.80;
+    public static final double DIESEL_INCREMENTO_DEFECTO = 0.00;
+    public static final double DIESEL_INTERNACIONAL_DEFECTO = 9.80;
+    public static final double GNV_BASE_SUBVENCIONADA_DEFECTO = 2.73;
+    public static final double GNV_INCREMENTO_DEFECTO = 0.00;
+    public static final double GNV_INTERNACIONAL_DEFECTO = 2.90;
 
     private final int n;
     private final double lambda;
     private final double precioInicial;
     private final double incrementoTrimestral;
     private final double precioInternacional;
+    private final double precioBaseGasolinaSubvencionada;
+    private final double incrementoGasolinaPorPeriodo;
+    private final double precioGasolinaInternacional;
+    private final double precioBaseDieselSubvencionado;
+    private final double incrementoDieselPorPeriodo;
+    private final double precioDieselInternacional;
+    private final double precioBaseGnvSubvencionado;
+    private final double incrementoGnvPorPeriodo;
+    private final double precioGnvInternacional;
     private final int trimestre;
     private final Random random;
 
@@ -78,7 +96,16 @@ public class Simulador {
                 CARGA_CISTERNA_MIN_DEFECTO,
                 CARGA_CISTERNA_MAX_DEFECTO,
                 DESCARGA_MIN_DEFECTO,
-                DESCARGA_MAX_DEFECTO
+                DESCARGA_MAX_DEFECTO,
+                precioInicial,
+                incrementoTrimestral,
+                precioInternacional,
+                DIESEL_BASE_SUBVENCIONADA_DEFECTO,
+                DIESEL_INCREMENTO_DEFECTO,
+                DIESEL_INTERNACIONAL_DEFECTO,
+                GNV_BASE_SUBVENCIONADA_DEFECTO,
+                GNV_INCREMENTO_DEFECTO,
+                GNV_INTERNACIONAL_DEFECTO
         );
     }
 
@@ -100,11 +127,129 @@ public class Simulador {
             double descargaMinima,
             double descargaMaxima
     ) {
+        this(
+                n,
+                lambda,
+                precioInicial,
+                incrementoTrimestral,
+                precioInternacional,
+                trimestre,
+                semilla,
+                inventarioInicial,
+                capacidadMaxima,
+                nivelMinimo,
+                tiempoCisternaMinimo,
+                tiempoCisternaMaximo,
+                cargaCisternaMinima,
+                cargaCisternaMaxima,
+                descargaMinima,
+                descargaMaxima,
+                precioInicial,
+                incrementoTrimestral,
+                precioInternacional,
+                DIESEL_BASE_SUBVENCIONADA_DEFECTO,
+                DIESEL_INCREMENTO_DEFECTO,
+                DIESEL_INTERNACIONAL_DEFECTO,
+                GNV_BASE_SUBVENCIONADA_DEFECTO,
+                GNV_INCREMENTO_DEFECTO,
+                GNV_INTERNACIONAL_DEFECTO
+        );
+    }
+
+    public Simulador(
+            int n,
+            double lambda,
+            double precioInicial,
+            double incrementoTrimestral,
+            double precioInternacional,
+            int trimestre,
+            long semilla,
+            double inventarioInicial,
+            double capacidadMaxima,
+            double nivelMinimo,
+            double tiempoCisternaMinimo,
+            double tiempoCisternaMaximo,
+            double cargaCisternaMinima,
+            double cargaCisternaMaxima,
+            double descargaMinima,
+            double descargaMaxima,
+            double precioGasolinaSubvencionada,
+            double precioGasolinaInternacional,
+            double precioDieselSubvencionado,
+            double precioDieselInternacional,
+            double precioGnvSubvencionado,
+            double precioGnvInternacional
+    ) {
+        this(
+                n,
+                lambda,
+                precioGasolinaSubvencionada,
+                0.0,
+                precioGasolinaInternacional,
+                trimestre,
+                semilla,
+                inventarioInicial,
+                capacidadMaxima,
+                nivelMinimo,
+                tiempoCisternaMinimo,
+                tiempoCisternaMaximo,
+                cargaCisternaMinima,
+                cargaCisternaMaxima,
+                descargaMinima,
+                descargaMaxima,
+                precioGasolinaSubvencionada,
+                0.0,
+                precioGasolinaInternacional,
+                precioDieselSubvencionado,
+                0.0,
+                precioDieselInternacional,
+                precioGnvSubvencionado,
+                0.0,
+                precioGnvInternacional
+        );
+    }
+
+    public Simulador(
+            int n,
+            double lambda,
+            double precioInicial,
+            double incrementoTrimestral,
+            double precioInternacional,
+            int trimestre,
+            long semilla,
+            double inventarioInicial,
+            double capacidadMaxima,
+            double nivelMinimo,
+            double tiempoCisternaMinimo,
+            double tiempoCisternaMaximo,
+            double cargaCisternaMinima,
+            double cargaCisternaMaxima,
+            double descargaMinima,
+            double descargaMaxima,
+            double precioBaseGasolinaSubvencionada,
+            double incrementoGasolinaPorPeriodo,
+            double precioGasolinaInternacional,
+            double precioBaseDieselSubvencionado,
+            double incrementoDieselPorPeriodo,
+            double precioDieselInternacional,
+            double precioBaseGnvSubvencionado,
+            double incrementoGnvPorPeriodo,
+            double precioGnvInternacional
+    ) {
         this.n = n;
         this.lambda = lambda;
         this.precioInicial = precioInicial;
         this.incrementoTrimestral = incrementoTrimestral;
         this.precioInternacional = precioInternacional;
+        this.precioBaseGasolinaSubvencionada = precioBaseGasolinaSubvencionada;
+        this.incrementoGasolinaPorPeriodo = incrementoGasolinaPorPeriodo;
+        this.precioGasolinaInternacional = precioGasolinaInternacional;
+        this.precioBaseDieselSubvencionado = precioBaseDieselSubvencionado;
+        this.incrementoDieselPorPeriodo = incrementoDieselPorPeriodo;
+        this.precioDieselInternacional = precioDieselInternacional;
+        this.precioBaseGnvSubvencionado = precioBaseGnvSubvencionado;
+        this.incrementoGnvPorPeriodo = incrementoGnvPorPeriodo;
+        this.precioGnvInternacional = precioGnvInternacional;
         this.trimestre = trimestre;
         this.random = new Random(semilla);
 
@@ -145,8 +290,6 @@ public class Simulador {
         List<ResultadoVehiculo> resultados = new ArrayList<>();
 
         double horaLlegada = 0.0;
-        double precioSubvencionado = calcularPrecioSubvencionado();
-
         for (int i = 1; i <= n; i++) {
             double rLlegada = Math.max(random.nextDouble(), 0.000001);
             double tiempoEntreLlegadas = -Math.log(rLlegada) / lambda;
@@ -159,6 +302,8 @@ public class Simulador {
 
             double esperaSub = surtidorSubMasLibre.calcularEspera(vehiculo.getHoraLlegada());
             double esperaInt = surtidorInternacional.calcularEspera(vehiculo.getHoraLlegada());
+            double precioSubvencionado = obtenerPrecioSubvencionado(vehiculo.getCarburante());
+            double precioInternacionalCarburante = obtenerPrecioInternacional(vehiculo.getCarburante());
 
             double costoSub = calcularCosto(
                     precioSubvencionado,
@@ -168,7 +313,7 @@ public class Simulador {
             );
 
             double costoInt = calcularCosto(
-                    precioInternacional,
+                    precioInternacionalCarburante,
                     vehiculo.getLitros(),
                     esperaInt,
                     vehiculo.getCostoOportunidad()
@@ -188,7 +333,7 @@ public class Simulador {
                 surtidorAsignado = surtidorInternacional;
                 decision = "Internacional";
                 costoFinal = costoInt;
-                precioAplicado = precioInternacional;
+                precioAplicado = precioInternacionalCarburante;
             }
 
             double inventarioAntes = inventarioActual;
@@ -386,10 +531,41 @@ public class Simulador {
     }
 
     private double calcularPrecioSubvencionado() {
-        return Math.min(
-                precioInicial + incrementoTrimestral * trimestre,
-                precioInternacional
-        );
+        return calcularPrecioSubvencionado(precioBaseGasolinaSubvencionada,
+                incrementoGasolinaPorPeriodo,
+                precioGasolinaInternacional);
+    }
+
+    private double obtenerPrecioSubvencionado(String carburante) {
+        if (carburante.equalsIgnoreCase("Diesel")) {
+            return calcularPrecioSubvencionado(precioBaseDieselSubvencionado,
+                    incrementoDieselPorPeriodo,
+                    precioDieselInternacional);
+        }
+        if (carburante.equalsIgnoreCase("GNV")) {
+            return calcularPrecioSubvencionado(precioBaseGnvSubvencionado,
+                    incrementoGnvPorPeriodo,
+                    precioGnvInternacional);
+        }
+        return calcularPrecioSubvencionado();
+    }
+
+    private double calcularPrecioSubvencionado(
+            double precioBase,
+            double incrementoPorPeriodo,
+            double precioInternacionalCarburante
+    ) {
+        return Math.min(precioBase + incrementoPorPeriodo * trimestre, precioInternacionalCarburante);
+    }
+
+    private double obtenerPrecioInternacional(String carburante) {
+        if (carburante.equalsIgnoreCase("Diesel")) {
+            return precioDieselInternacional;
+        }
+        if (carburante.equalsIgnoreCase("GNV")) {
+            return precioGnvInternacional;
+        }
+        return precioGasolinaInternacional;
     }
 
     private double calcularCosto(
@@ -421,10 +597,13 @@ public class Simulador {
 
     public void imprimirTabla(List<ResultadoVehiculo> resultados, int limite) {
         System.out.println();
-        System.out.println("Precio subvencionado del trimestre " + trimestre + ": Bs. "
-                + String.format(Locale.US, "%.2f", calcularPrecioSubvencionado()) + "/L");
-        System.out.println("Precio internacional: Bs. "
-                + String.format(Locale.US, "%.2f", precioInternacional) + "/L");
+        System.out.println("PRECIOS POR CARBURANTE");
+        System.out.printf(Locale.US, "Gasolina | Subv.: Bs. %.2f/L | Int.: Bs. %.2f/L%n",
+                obtenerPrecioSubvencionado("Gasolina"), precioGasolinaInternacional);
+        System.out.printf(Locale.US, "Diesel   | Subv.: Bs. %.2f/L | Int.: Bs. %.2f/L%n",
+                obtenerPrecioSubvencionado("Diesel"), precioDieselInternacional);
+        System.out.printf(Locale.US, "GNV      | Subv.: Bs. %.2f/L | Int.: Bs. %.2f/L%n",
+                obtenerPrecioSubvencionado("GNV"), precioGnvInternacional);
 
         System.out.println();
         System.out.println("TABLA INDIVIDUAL RESUMIDA");
@@ -517,7 +696,31 @@ public class Simulador {
     }
 
     public double getPrecioInternacional() {
-        return precioInternacional;
+        return precioGasolinaInternacional;
+    }
+
+    public double getPrecioGasolinaSubvencionada() {
+        return obtenerPrecioSubvencionado("Gasolina");
+    }
+
+    public double getPrecioGasolinaInternacional() {
+        return precioGasolinaInternacional;
+    }
+
+    public double getPrecioDieselSubvencionado() {
+        return obtenerPrecioSubvencionado("Diesel");
+    }
+
+    public double getPrecioDieselInternacional() {
+        return precioDieselInternacional;
+    }
+
+    public double getPrecioGnvSubvencionado() {
+        return obtenerPrecioSubvencionado("GNV");
+    }
+
+    public double getPrecioGnvInternacional() {
+        return precioGnvInternacional;
     }
 
     public int getTrimestre() {
